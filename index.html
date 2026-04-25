@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>WEBアプリ倉庫</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --accent: #6c63ff; --accent2: #a78bfa; --danger: #ff4d6d;
+      --success: #4ade80; --warn: #facc15; --type-html: #6c63ff;
+      --type-url: #06b6d4; --type-bm: #f59e0b; --type-pwa: #34d399; --radius: 14px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+    [data-theme="dark"] {
+      --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a; --surface3: #2a2f47;
+      --border: rgba(255,255,255,0.07); --text: #e8eaf6; --muted: #8b92b8;
+      --header-bg: linear-gradient(135deg,#1a1d27 0%,#12141e 100%);
+      --modal-bg-color: rgba(0,0,0,0.72); --input-bg: #22263a;
+    }
+    [data-theme="light"] {
+      --bg: #f0f2ff; --surface: #ffffff; --surface2: #eef0fb; --surface3: #e4e7f8;
+      --border: rgba(0,0,0,0.08); --text: #1a1d27; --muted: #6b7280;
+      --header-bg: linear-gradient(135deg,#ffffff 0%,#f0f2ff 100%);
+      --modal-bg-color: rgba(0,0,0,0.5); --input-bg: #eef0fb;
+      --shadow: 0 4px 24px rgba(108,99,255,0.12);
+    }
+    body { background:var(--bg); color:var(--text); font-family:'Segoe UI','Hiragino Sans',sans-serif; min-height:100vh; transition:background 0.3s,color 0.3s; -webkit-tap-highlight-color:transparent; }
+    header { background:var(--header-bg); border-bottom:1px solid var(--border); padding:16px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+    .logo { display:flex; align-items:center; gap:10px; }
+    .logo-icon { width:36px; height:36px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; }
+    .logo h1 { font-size:1.25rem; font-weight:800; background:linear-gradient(135deg,var(--text),var(--accent2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .header-right { display:flex; align-items:center; gap:10px; }
+    .db-status { display:flex; align-items:center; gap:5px; font-size:0.78rem; color:var(--muted); }
+    .db-dot { width:7px; height:7px; border-radius:50%; background:#555; transition:background 0.3s; }
+    .db-dot.online { background:var(--success); box-shadow:0 0 5px var(--success); }
+    .db-dot.offline { background:var(--danger); }
+    .db-dot.loading { background:var(--warn); animation:blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .app-count { background:rgba(108,99,255,0.12); color:var(--accent2); padding:3px 12px; border-radius:20px; font-size:0.8rem; border:1px solid rgba(108,99,255,0.25); }
+    .icon-btn-hd { background:var(--surface2); border:1px solid var(--border); border-radius:9px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:17px; cursor:pointer; transition:background 0.15s; }
+    .icon-btn-hd:hover { background:var(--surface3); }
+    main { max-width:1400px; margin:0 auto; padding:24px 18px; }
+    .toolbar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+    .search-wrap { flex:1; min-width:160px; position:relative; }
+    .search-wrap input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:9px 12px 9px 38px; color:var(--text); font-size:16px; outline:none; transition:border-color 0.2s; }
+    .search-wrap input:focus { border-color:var(--accent); }
+    .search-wrap::before { content:'🔍'; position:absolute; left:11px; top:50%; transform:translateY(-50%); font-size:14px; }
+    .toolbar select { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:9px 12px; color:var(--text); font-size:0.86rem; outline:none; cursor:pointer; }
+    .type-filters { display:flex; gap:6px; flex-wrap:wrap; }
+    .type-filter { padding:5px 12px; border-radius:20px; font-size:0.8rem; font-weight:600; border:1px solid var(--border); background:var(--surface); color:var(--muted); cursor:pointer; transition:all 0.15s; }
+    .type-filter:hover { color:var(--text); }
+    .type-filter.active-all  { background:rgba(108,99,255,0.18); border-color:var(--accent);    color:var(--accent2); }
+    .type-filter.active-html { background:rgba(108,99,255,0.18); border-color:var(--type-html); color:var(--type-html); }
+    .type-filter.active-url  { background:rgba(6,182,212,0.15);  border-color:var(--type-url);  color:var(--type-url); }
+    .type-filter.active-bm   { background:rgba(245,158,11,0.15); border-color:var(--type-bm);   color:var(--type-bm); }
+    .type-filter.active-pwa  { background:rgba(52,211,153,0.15); border-color:var(--type-pwa);  color:var(--type-pwa); }
+    .btn-new-folder { display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:10px; background:var(--surface); border:1px solid var(--border); color:var(--muted); font-size:0.84rem; font-weight:600; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+    .btn-new-folder:hover { border-color:var(--warn); color:var(--warn); background:rgba(250,204,21,0.08); }
+    .section-label { font-size:0.8rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin:20px 0 10px; display:flex; align-items:center; gap:8px; }
+    .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+    .app-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:16px; }
+    .folder-card { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s; cursor:pointer; position:relative; }
+    .folder-card:hover { transform:translateY(-3px); box-shadow:var(--shadow); border-color:rgba(250,204,21,0.5); }
+    .folder-card.drag-over { border-color:var(--warn); background:rgba(250,204,21,0.05); }
+    .folder-header { padding:14px 16px; display:flex; align-items:center; gap:10px; }
+    .folder-emoji { font-size:28px; }
+    .folder-info { flex:1; }
+    .folder-name { font-size:0.98rem; font-weight:700; }
+    .folder-count { font-size:0.76rem; color:var(--muted); margin-top:2px; }
+    .folder-thumbs { display:grid; grid-template-columns:repeat(4,1fr); gap:2px; padding:0 12px 12px; }
+    .thumb-cell { aspect-ratio:1; border-radius:6px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:18px; border:1px solid var(--border); }
+    .thumb-cell.empty { opacity:0.3; }
+    .app-card { background:var(--surface); border-radius:var(--radius); border:1px solid var(--border); overflow:hidden; transition:transform 0.2s,box-shadow 0.2s,border-color 0.2s; display:flex; flex-direction:column; cursor:pointer; position:relative; }
+    .app-card:hover { transform:translateY(-3px); box-shadow:var(--shadow); }
+    .app-card.type-html:hover { border-color:rgba(108,99,255,0.5); }
+    .app-card.type-url:hover  { border-color:rgba(6,182,212,0.5); }
+    .app-card.type-bm:hover   { border-color:rgba(245,158,11,0.5); }
+    .app-card.type-pwa:hover  { border-color:rgba(52,211,153,0.5); }
+    .app-card.dragging { opacity:0.4; transform:scale(0.97); }
+    .drag-hint { position:absolute; top:8px; right:8px; font-size:11px; color:var(--muted); opacity:0; transition:opacity 0.2s; pointer-events:none; background:var(--surface2); padding:2px 6px; border-radius:4px; }
+    .app-card:hover .drag-hint { opacity:0.7; }
+    .type-badge { position:absolute; top:8px; left:8px; padding:2px 8px; border-radius:20px; font-size:0.7rem; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; }
+    .type-badge.html { background:rgba(108,99,255,0.2);  color:var(--type-html); border:1px solid rgba(108,99,255,0.35); }
+    .type-badge.url  { background:rgba(6,182,212,0.18);  color:var(--type-url);  border:1px solid rgba(6,182,212,0.35); }
+    .type-badge.bm   { background:rgba(245,158,11,0.18); color:var(--type-bm);   border:1px solid rgba(245,158,11,0.35); }
+    .type-badge.pwa  { background:rgba(52,211,153,0.18); color:var(--type-pwa);  border:1px solid rgba(52,211,153,0.35); }
+    .card-icon { height:120px; display:flex; align-items:center; justify-content:center; font-size:48px; position:relative; }
+    .card-icon.html-bg { background:linear-gradient(135deg,var(--surface2),rgba(108,99,255,0.1)); }
+    .card-icon.url-bg  { background:linear-gradient(135deg,var(--surface2),rgba(6,182,212,0.1)); }
+    .card-icon.bm-bg   { background:linear-gradient(135deg,var(--surface2),rgba(245,158,11,0.1)); }
+    .card-icon.pwa-bg  { background:linear-gradient(135deg,var(--surface2),rgba(52,211,153,0.1)); }
+    .preview-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); opacity:0; transition:opacity 0.2s; font-size:1.7rem; color:#fff; font-weight:700; }
+    .app-card:hover .preview-overlay { opacity:1; }
+    .card-body { padding:12px 14px; flex:1; display:flex; flex-direction:column; gap:4px; }
+    .card-name { font-size:0.97rem; font-weight:700; }
+    .card-desc { font-size:0.81rem; color:var(--muted); line-height:1.4; flex:1; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .card-url-preview { font-size:0.72rem; color:var(--type-url); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:0.8; }
+    .card-pwa-url { font-size:0.72rem; color:var(--type-pwa); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:0.8; }
+    .card-meta { font-size:0.7rem; color:var(--muted); opacity:0.65; }
+    .bm-drag-area { margin:6px 14px 0; padding:6px 10px; background:rgba(245,158,11,0.07); border:1px dashed rgba(245,158,11,0.35); border-radius:7px; font-size:0.74rem; color:var(--type-bm); text-align:center; }
+    .bm-drag-link { display:inline-block; padding:3px 10px; background:rgba(245,158,11,0.18); border-radius:5px; color:var(--type-bm); font-weight:700; text-decoration:none; cursor:grab; border:1px solid rgba(245,158,11,0.35); font-size:0.78rem; }
+    .card-footer { padding:8px 12px; border-top:1px solid var(--border); display:flex; gap:5px; justify-content:flex-end; }
+    .btn-icon { background:none; border:none; padding:5px 8px; border-radius:7px; cursor:pointer; font-size:14px; transition:background 0.15s; color:var(--muted); }
+    .btn-icon:hover { background:rgba(255,255,255,0.08); }
+    .btn-icon.danger:hover { background:rgba(255,77,109,0.15); color:var(--danger); }
+    .empty-state { text-align:center; padding:70px 20px; color:var(--muted); grid-column:1/-1; }
+    .empty-state .big-icon { font-size:56px; margin-bottom:12px; }
+    .empty-state h2 { font-size:1.25rem; margin-bottom:7px; color:var(--text); }
+
+    /* モーダル共通 */
+    .modal-bg { position:fixed; inset:0; background:var(--modal-bg-color); z-index:300; display:flex; align-items:center; justify-content:center; padding:18px; backdrop-filter:blur(5px); opacity:0; pointer-events:none; transition:opacity 0.25s; }
+    .modal-bg.open { opacity:1; pointer-events:all; }
+    .modal { background:var(--surface); border-radius:20px; border:1px solid rgba(108,99,255,0.2); width:100%; max-width:620px; max-height:85dvh; display:flex; flex-direction:column; transform:scale(0.95) translateY(10px); transition:transform 0.25s,background 0.3s; box-shadow:0 20px 60px rgba(0,0,0,0.55); }
+    .modal-bg.open .modal { transform:scale(1) translateY(0); }
+    .modal-header { padding:20px 24px 0; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:var(--surface); z-index:10; padding-bottom:12px; border-bottom:1px solid var(--border); flex-shrink:0; border-top-left-radius:20px; border-top-right-radius:20px; }
+    .modal-header h2 { font-size:1.1rem; font-weight:700; margin:0; }
+    .btn-close { background:var(--surface2); border:none; width:30px; height:30px; border-radius:50%; font-size:16px; cursor:pointer; color:var(--muted); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .btn-close:hover { background:rgba(255,77,109,0.2); color:var(--danger); }
+    .modal-body { padding:16px 24px 24px; overflow-y:auto; flex:1; -webkit-overflow-scrolling:touch; }
+    #folder-view-modal .modal { max-width:860px; }
+    #bm-modal .modal          { max-width:520px; }
+    #settings-modal .modal    { max-width:500px; }
+    #folder-name-modal .modal { max-width:380px; }
+    #pin-modal .modal         { max-width:360px; text-align:center; }
+    #confirm-modal .modal     { max-width:340px; text-align:center; }
+    #viewer-modal .modal { max-width:95vw; width:95vw; max-height:95dvh; height:95dvh; overflow:hidden; }
+    #viewer-frame-wrap { flex:1; padding:0 17px 17px; overflow:hidden; display:flex; flex-direction:column; }
+    #viewer-frame { width:100%; flex:1; border:none; border-radius:10px; background:#fff; }
+
+    /* PWAデプロイモーダル */
+    #pwa-modal .modal { max-width:680px; }
+    .pwa-stepper { display:flex; justify-content:center; align-items:center; margin-bottom:20px; padding:4px; overflow-x:auto; }
+    .pwa-step-item { display:flex; align-items:center; }
+    .pwa-step-inner { display:flex; flex-direction:column; align-items:center; }
+    .pwa-step-circle { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border:2px solid var(--border); color:var(--muted); background:var(--surface2); transition:all 0.3s; flex-shrink:0; }
+    .pwa-step-label { font-size:10px; color:var(--muted); margin-top:3px; white-space:nowrap; }
+    .pwa-step-line { width:32px; height:2px; background:var(--border); transition:background 0.3s; flex-shrink:0; margin-bottom:14px; }
+    .pwa-step-item.pwa-active .pwa-step-circle { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 0 12px rgba(108,99,255,0.5); }
+    .pwa-step-item.pwa-active .pwa-step-label { color:var(--accent2); }
+    .pwa-step-item.pwa-done .pwa-step-circle { background:var(--type-pwa); border-color:var(--type-pwa); color:#fff; }
+    .pwa-step-item.pwa-done .pwa-step-label { color:var(--type-pwa); }
+    .pwa-step-line.pwa-done { background:var(--type-pwa); }
+    .pwa-card { display:none; }
+    .pwa-card.pwa-active { display:block; animation:fadeIn 0.3s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+    /* フォーム */
+    .folder-view-header { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .folder-view-emoji { font-size:32px; }
+    .folder-view-name  { font-size:1.2rem; font-weight:800; }
+    .folder-view-count { font-size:0.8rem; color:var(--muted); }
+    .folder-view-grid  { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+    .type-tabs { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-bottom:18px; }
+    .type-tab { padding:9px 6px; border-radius:10px; text-align:center; border:2px solid var(--border); background:var(--surface2); cursor:pointer; transition:all 0.15s; font-size:0.84rem; font-weight:600; color:var(--muted); }
+    .type-tab .tab-icon { font-size:20px; display:block; margin-bottom:3px; }
+    .type-tab:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+    .type-tab.sel-html { border-color:var(--type-html); background:rgba(108,99,255,0.14); color:var(--type-html); }
+    .type-tab.sel-url  { border-color:var(--type-url);  background:rgba(6,182,212,0.12);  color:var(--type-url); }
+    .type-tab.sel-bm   { border-color:var(--type-bm);   background:rgba(245,158,11,0.12); color:var(--type-bm); }
+    .type-tab.sel-pwa  { border-color:var(--type-pwa);  background:rgba(52,211,153,0.12); color:var(--type-pwa); }
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; font-size:0.78rem; color:var(--muted); margin-bottom:5px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+    .form-group input, .form-group textarea, .form-group select { width:100%; background:var(--input-bg); border:1px solid var(--border); border-radius:10px; padding:10px 12px; color:var(--text); font-size:16px; outline:none; transition:border-color 0.2s; font-family:inherit; }
+    .form-group textarea { resize:vertical; min-height:180px; font-family:'Consolas','Monaco',monospace; font-size:0.81rem; line-height:1.5; }
+    .form-group input:focus, .form-group textarea:focus { border-color:var(--accent); }
+    .form-hint { font-size:0.75rem; color:var(--muted); margin-top:4px; line-height:1.4; }
+    .icon-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:6px; margin-top:6px; }
+    .icon-btn { background:var(--surface2); border:2px solid transparent; border-radius:7px; padding:6px; font-size:17px; cursor:pointer; text-align:center; transition:border-color 0.15s,background 0.15s; }
+    .icon-btn:hover,.icon-btn.selected { border-color:var(--accent); background:rgba(108,99,255,0.14); }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .field-block { display:none; }
+    .field-block.visible { display:block; }
+    .btn-primary { width:100%; padding:12px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:11px; color:#fff; font-size:0.94rem; font-weight:700; cursor:pointer; transition:opacity 0.2s,transform 0.15s; margin-top:4px; display:flex; align-items:center; justify-content:center; gap:7px; flex-shrink:0; }
+    .btn-primary:hover { opacity:0.88; transform:translateY(-1px); }
+    .btn-primary:disabled { opacity:0.45; cursor:not-allowed; transform:none; }
+    .btn-primary.pwa-green { background:linear-gradient(135deg,#059669,#34d399); }
+
+    /* PWA専用UI */
+    .pwa-info-box { background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.25); border-radius:10px; padding:12px 14px; font-size:0.82rem; color:var(--muted); line-height:1.6; margin-bottom:16px; }
+    .pwa-info-box a { color:var(--type-pwa); text-decoration:none; }
+    .pwa-warn-box { background:rgba(250,204,21,0.08); border:1px solid rgba(250,204,21,0.25); border-radius:10px; padding:12px 14px; font-size:0.82rem; color:#facc15; line-height:1.6; margin-bottom:16px; display:none; }
+    .pwa-error-box { background:rgba(255,77,109,0.08); border:1px solid rgba(255,77,109,0.3); border-radius:10px; padding:12px 14px; font-size:0.82rem; color:var(--danger); line-height:1.6; margin-bottom:16px; display:none; }
+    .token-wrap-pwa { position:relative; }
+    .token-wrap-pwa input { padding-right:44px; font-family:monospace; }
+    .toggle-vis-pwa { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:4px; }
+    .color-row-pwa { display:flex; align-items:center; gap:8px; }
+    .color-row-pwa input[type="color"] { width:40px; height:36px; padding:2px; border-radius:8px; background:var(--surface2); border:1px solid var(--border); cursor:pointer; }
+    .display-grid-pwa { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+    .display-opt { border:2px solid var(--border); border-radius:10px; padding:10px 8px; text-align:center; cursor:pointer; transition:all 0.2s; background:var(--surface2); }
+    .display-opt:hover { border-color:var(--accent); }
+    .display-opt.sel { border-color:var(--type-pwa); background:rgba(52,211,153,0.1); }
+    .display-opt .d-icon { font-size:18px; margin-bottom:4px; }
+    .display-opt .d-name { font-size:11px; font-weight:600; }
+    .display-opt .d-desc { font-size:10px; color:var(--muted); margin-top:2px; }
+    input[type="radio"].pwa-radio { display:none; }
+    .pwa-icon-drop { border:2px dashed var(--border); border-radius:10px; padding:20px; text-align:center; cursor:pointer; transition:all 0.2s; position:relative; }
+    .pwa-icon-drop:hover,.pwa-icon-drop.dragover { border-color:var(--accent); background:rgba(108,99,255,0.07); }
+    .pwa-icon-drop input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .pwa-icon-preview { width:60px; height:60px; border-radius:14px; object-fit:cover; border:2px solid var(--border); display:none; }
+    .pwa-chip-wrap { display:flex; gap:7px; flex-wrap:wrap; }
+    .pwa-chip { background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:3px 9px; font-size:11px; color:var(--muted); }
+    .pwa-chip.ready { border-color:var(--type-pwa); color:var(--type-pwa); }
+    .pwa-progress-bg { background:var(--surface2); border-radius:100px; height:7px; overflow:hidden; margin-bottom:14px; }
+    .pwa-progress-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--type-pwa)); border-radius:100px; transition:width 0.4s ease; width:0%; }
+    .pwa-step-rows { display:flex; flex-direction:column; gap:7px; margin-bottom:16px; }
+    .pwa-step-row { display:flex; align-items:center; gap:9px; font-size:13px; color:var(--muted); }
+    .pwa-step-row .sr-icon { width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; background:var(--surface2); border:1px solid var(--border); }
+    .pwa-step-row.ps-running .sr-icon { background:rgba(108,99,255,0.2); border-color:var(--accent); animation:blink 1s infinite; }
+    .pwa-step-row.ps-done .sr-icon { background:rgba(52,211,153,0.15); border-color:var(--type-pwa); color:var(--type-pwa); }
+    .pwa-step-row.ps-done { color:var(--text); }
+    .pwa-step-row.ps-error .sr-icon { background:rgba(255,77,109,0.15); border-color:var(--danger); color:var(--danger); }
+    .pwa-step-row.ps-error { color:var(--danger); }
+    .pwa-step-row.ps-skip { opacity:0.45; }
+    .pwa-success-hero { text-align:center; padding:10px 0 16px; }
+    .pwa-success-icon { font-size:52px; margin-bottom:10px; animation:popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+    @keyframes popIn { from{transform:scale(0)} to{transform:scale(1)} }
+    .pwa-success-title { font-size:20px; font-weight:800; margin-bottom:6px; background:linear-gradient(135deg,var(--type-pwa),#6ee7b7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .pwa-url-box { background:var(--surface2); border:1px solid var(--type-pwa); border-radius:10px; padding:12px 16px; margin:14px 0; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+    .pwa-url-text { flex:1; font-family:monospace; font-size:12px; color:var(--type-pwa); word-break:break-all; }
+    .pwa-copy-btn { background:rgba(52,211,153,0.12); border:1px solid rgba(52,211,153,0.3); color:var(--type-pwa); border-radius:8px; padding:6px 11px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all 0.2s; }
+    .pwa-open-btn { background:rgba(108,99,255,0.12); border:1px solid rgba(108,99,255,0.3); color:var(--accent2); border-radius:8px; padding:6px 11px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; transition:all 0.2s; text-decoration:none; display:inline-flex; align-items:center; }
+    #pwa-qrcode { display:flex; justify-content:center; margin:10px 0; }
+    #pwa-qrcode canvas, #pwa-qrcode img { border-radius:10px; border:3px solid var(--border); }
+    .install-steps-pwa { background:var(--surface2); border-radius:10px; padding:14px; margin:10px 0; }
+    .install-steps-pwa h3 { font-size:12px; font-weight:700; margin-bottom:10px; color:var(--muted); }
+    .install-step-pwa { display:flex; gap:9px; margin-bottom:9px; font-size:12px; line-height:1.5; }
+    .install-num-pwa { width:19px; height:19px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0; margin-top:2px; }
+    .pwa-btn-row { display:flex; gap:9px; justify-content:flex-end; margin-top:18px; flex-wrap:wrap; }
+    .pwa-btn-secondary { background:var(--surface2); color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 18px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+    .pwa-btn-secondary:hover { border-color:var(--accent); color:var(--accent2); }
+
+    /* 設定系 */
+    .bm-detail-drag { text-align:center; padding:18px; background:rgba(245,158,11,0.07); border:2px dashed rgba(245,158,11,0.3); border-radius:11px; margin-bottom:16px; }
+    .bm-detail-drag p { font-size:0.82rem; color:var(--muted); margin-bottom:9px; }
+    .bm-detail-link { display:inline-block; padding:7px 18px; background:rgba(245,158,11,0.18); border-radius:7px; color:var(--type-bm); font-weight:700; text-decoration:none; cursor:grab; border:1px solid rgba(245,158,11,0.45); font-size:0.87rem; }
+    .bm-code { background:var(--surface2); border-radius:9px; padding:11px; font-family:monospace; font-size:0.75rem; color:var(--text); line-height:1.5; word-break:break-all; max-height:140px; overflow-y:auto; border:1px solid var(--border); }
+    .settings-section { margin-bottom:24px; }
+    .settings-section-title { font-size:0.78rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+    .theme-toggle { display:flex; gap:8px; }
+    .theme-btn { flex:1; padding:11px 8px; border-radius:10px; text-align:center; border:2px solid var(--border); background:var(--surface2); cursor:pointer; transition:all 0.15s; font-size:0.88rem; font-weight:600; color:var(--muted); }
+    .theme-btn .t-icon { font-size:22px; display:block; margin-bottom:4px; }
+    .theme-btn.active { border-color:var(--accent); background:rgba(108,99,255,0.15); color:var(--accent2); }
+    .key-card { background:var(--surface2); border-radius:10px; padding:12px 14px; margin-bottom:10px; border:1px solid var(--border); }
+    .key-card-label { font-size:0.75rem; color:var(--muted); font-weight:600; text-transform:uppercase; margin-bottom:6px; }
+    .key-card-val { font-family:'Consolas','Monaco',monospace; font-size:0.8rem; color:var(--text); word-break:break-all; line-height:1.5; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+    .key-copy-btn { background:rgba(108,99,255,0.15); border:1px solid rgba(108,99,255,0.25); border-radius:6px; padding:3px 9px; font-size:0.75rem; color:var(--accent2); cursor:pointer; white-space:nowrap; flex-shrink:0; transition:background 0.15s; }
+    .key-copy-btn:hover { background:rgba(108,99,255,0.28); }
+    .storage-info { background:var(--surface2); border-radius:10px; padding:14px 16px; border:1px solid var(--border); }
+    .storage-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+    .storage-used { font-size:1.2rem; font-weight:800; color:var(--text); }
+    .storage-limit { font-size:0.8rem; color:var(--muted); }
+    .storage-bar-bg { height:8px; background:var(--surface3); border-radius:4px; overflow:hidden; margin-bottom:8px; }
+    .storage-bar-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent),var(--accent2)); transition:width 0.6s ease; }
+    .storage-bar-fill.warn   { background:linear-gradient(90deg,#f59e0b,#facc15); }
+    .storage-bar-fill.danger { background:linear-gradient(90deg,var(--danger),#ff8fa3); }
+    .storage-detail { display:flex; gap:14px; flex-wrap:wrap; font-size:0.76rem; color:var(--muted); }
+    .storage-detail span { color:var(--text); font-weight:600; }
+    .confirm-icon { font-size:44px; margin:8px 0 13px; }
+    .confirm-msg  { color:var(--muted); font-size:0.9rem; line-height:1.6; margin-bottom:20px; }
+    .confirm-btns { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+    .btn-cancel { padding:10px; background:var(--surface2); border:1px solid var(--border); border-radius:9px; color:var(--text); font-size:0.9rem; cursor:pointer; transition:background 0.15s; }
+    .btn-cancel:hover { background:var(--surface3); }
+    .btn-delete { padding:10px; background:rgba(255,77,109,0.14); border:1px solid rgba(255,77,109,0.28); border-radius:9px; color:var(--danger); font-size:0.9rem; font-weight:700; cursor:pointer; transition:background 0.15s; }
+    .btn-delete:hover { background:rgba(255,77,109,0.28); }
+    .pin-icon { font-size:48px; margin:8px 0 10px; }
+    .pin-title { font-size:1.05rem; font-weight:800; margin-bottom:6px; }
+    .pin-sub { font-size:0.82rem; color:var(--muted); margin-bottom:20px; line-height:1.5; }
+    .pin-dots { display:flex; justify-content:center; gap:14px; margin-bottom:18px; }
+    .pin-dot { width:16px; height:16px; border-radius:50%; background:var(--surface3); border:2px solid var(--border); transition:all 0.15s; }
+    .pin-dot.filled { background:var(--accent); border-color:var(--accent); box-shadow:0 0 8px rgba(108,99,255,0.5); }
+    .pin-dot.error  { background:var(--danger); border-color:var(--danger); }
+    .pin-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; max-width:220px; margin:0 auto 14px; }
+    .pin-key { background:var(--surface2); border:1px solid var(--border); border-radius:11px; padding:14px; font-size:1.2rem; font-weight:700; cursor:pointer; transition:all 0.12s; user-select:none; }
+    .pin-key:hover { background:var(--surface3); border-color:var(--accent); transform:scale(1.05); }
+    .pin-key:active { transform:scale(0.95); }
+    .pin-err-msg { font-size:0.78rem; color:var(--danger); min-height:18px; margin-bottom:4px; }
+    #fab { position:fixed; bottom:26px; right:26px; width:54px; height:54px; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:50%; font-size:24px; color:#fff; cursor:pointer; box-shadow:0 6px 20px rgba(108,99,255,0.5); transition:transform 0.2s,box-shadow 0.2s; z-index:150; display:flex; align-items:center; justify-content:center; }
+    #fab:hover { transform:scale(1.1) rotate(90deg); box-shadow:0 8px 28px rgba(108,99,255,0.7); }
+    #toast { position:fixed; bottom:86px; right:26px; background:var(--surface); border:1px solid rgba(108,99,255,0.28); border-radius:11px; padding:10px 16px; font-size:0.86rem; color:var(--text); box-shadow:var(--shadow); z-index:400; transform:translateY(14px); opacity:0; transition:all 0.3s; pointer-events:none; }
+    #toast.show { transform:translateY(0); opacity:1; }
+    .spinner { width:15px; height:15px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; display:none; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(128,128,128,0.2); border-radius:3px; }
+  </style>
+
+  <link rel="manifest" href="/app-pwa-container/manifest.json">
+  <meta name="theme-color" content="#7c6aff">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MyAppStore">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/app-pwa-container/icon-192.png">
+  <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/app-pwa-container/sw.js').catch(()=>{});});}</script>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📦</div>
+    <h1>WEBアプリ倉庫</h1>
+  </div>
+  <div class="header-right">
+    <div class="db-status">
+      <div class="db-dot loading" id="db-dot"></div>
+      <span id="db-label">接続中...</span>
+    </div>
+    <span class="app-count" id="count-badge">0 apps</span>
+    <div class="icon-btn-hd" onclick="openSettings()" title="設定">⚙️</div>
+  </div>
+</header>
+
+<main>
+  <div id="main-grid"></div>
+</main>
+
+<button id="fab" onclick="openRegisterModal(null)" title="アプリを登録">＋</button>
+
+<!-- 登録/編集モーダル -->
+<div class="modal-bg" id="register-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">📥 アプリを登録</h2>
+      <button class="btn-close" onclick="closeModal('register-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="type-tabs" id="type-tabs">
+        <div class="type-tab sel-html" data-type="html" onclick="selectType('html')"><span class="tab-icon">📄</span>HTMLアプリ</div>
+        <div class="type-tab" data-type="url"  onclick="selectType('url')"><span class="tab-icon">🔗</span>URLアプリ</div>
+        <div class="type-tab" data-type="bm"   onclick="selectType('bm')"><span class="tab-icon">🔖</span>ブックマークレット</div>
+        <div class="type-tab" data-type="pwa"  onclick="selectType('pwa')"><span class="tab-icon">⚡</span>PWAデプロイ</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>アプリ名 *</label>
+          <input type="text" id="f-name" placeholder="例: カラーピッカー" />
+        </div>
+        <div class="form-group">
+          <label>アイコン</label>
+          <input type="text" id="f-icon-input" placeholder="絵文字..." maxlength="4" oninput="selectIconFromInput(this.value)" style="text-align:center;font-size:1.35rem;" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>よく使う絵文字</label>
+        <div class="icon-grid" id="icon-grid"></div>
+      </div>
+      <div class="form-group">
+        <label>説明（任意）</label>
+        <input type="text" id="f-desc" placeholder="このアプリの説明を一言で..." />
+      </div>
+      <div class="form-group" id="folder-assign-group">
+        <label>フォルダ（任意）</label>
+        <select id="f-folder"><option value="">フォルダなし（トップに表示）</option></select>
+      </div>
+      <div class="field-block visible" id="field-html">
+        <div class="form-group">
+          <label>HTMLコード *</label>
+          <textarea id="f-html" placeholder="<!DOCTYPE html> から..."></textarea>
+        </div>
+      </div>
+      <div class="field-block" id="field-url">
+        <div class="form-group">
+          <label>URL *</label>
+          <input type="url" id="f-url" placeholder="https://your-app.netlify.app" />
+          <p class="form-hint">🔗 外部URLを登録。クリックで新しいタブが開きます。</p>
+        </div>
+      </div>
+      <div class="field-block" id="field-bm">
+        <div class="form-group">
+          <label>ブックマークレットコード *</label>
+          <textarea id="f-bm" placeholder="javascript:(function(){...})()" style="min-height:110px;"></textarea>
+          <p class="form-hint">🔖 <code style="background:rgba(128,128,128,0.15);padding:1px 4px;border-radius:3px;">javascript:</code> から始まるコードを貼り付けてください。</p>
+        </div>
+      </div>
+      <!-- PWAタイプ: 直接デプロイフローへ誘導 -->
+      <div class="field-block" id="field-pwa">
+        <div class="pwa-info-box">
+          ⚡ <strong>PWAデプロイ</strong>モードです。「デプロイを開始する」ボタンを押すと、HTMLをペーストしてGitHub PagesへPWA化・デプロイするウィザードが開きます。デプロイ完了後、自動的にこの倉庫に登録されます。
+        </div>
+        <button class="btn-primary pwa-green" onclick="openPwaWizard()">
+          ⚡ PWAデプロイウィザードを開く
+        </button>
+      </div>
+      <button class="btn-primary" id="save-btn" onclick="saveApp()" style="margin-top:8px;">
+        <span class="spinner" id="save-spinner"></span>
+        <span id="save-label">💾 保存する</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PWAデプロイウィザードモーダル -->
+<div class="modal-bg" id="pwa-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="pwa-modal-title">⚡ PWAデプロイ</h2>
+      <button class="btn-close" onclick="closePwaModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- ステッパー -->
+      <div class="pwa-stepper" id="pwa-stepper">
+        <div class="pwa-step-item pwa-active" id="psi-0"><div class="pwa-step-inner"><div class="pwa-step-circle">1</div><div class="pwa-step-label">GitHub</div></div></div>
+        <div class="pwa-step-line" id="psl-0"></div>
+        <div class="pwa-step-item" id="psi-1"><div class="pwa-step-inner"><div class="pwa-step-circle">2</div><div class="pwa-step-label">HTML</div></div></div>
+        <div class="pwa-step-line" id="psl-1"></div>
+        <div class="pwa-step-item" id="psi-2"><div class="pwa-step-inner"><div class="pwa-step-circle">3</div><div class="pwa-step-label">設定</div></div></div>
+        <div class="pwa-step-line" id="psl-2"></div>
+        <div class="pwa-step-item" id="psi-3"><div class="pwa-step-inner"><div class="pwa-step-circle">4</div><div class="pwa-step-label">デプロイ</div></div></div>
+        <div class="pwa-step-line" id="psl-3"></div>
+        <div class="pwa-step-item" id="psi-4"><div class="pwa-step-inner"><div class="pwa-step-circle">5</div><div class="pwa-step-label">完了</div></div></div>
+      </div>
+
+      <!-- Step1: GitHub -->
+      <div class="pwa-card pwa-active" id="pwa-step-0">
+        <div class="pwa-info-box">💡 <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a> を開き <strong>Tokens (classic)</strong> → <strong>「repo」スコープのみ</strong>チェックして生成。<br>※ 設定済みのTokenが自動で使われます。未設定の場合のみ入力してください。</div>
+        <div class="form-group">
+          <label>Personal Access Token (Classic)</label>
+          <div class="token-wrap-pwa">
+            <input type="password" id="pw-token" placeholder="ghp_... （設定済みなら空欄でOK）" />
+            <button class="toggle-vis-pwa" onclick="pwToggleVis()">👁</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>リポジトリ名 *</label>
+            <input type="text" id="pw-repo" placeholder="my-pwa-app" oninput="pwSanitizeRepo(this)" />
+          </div>
+          <div class="form-group">
+            <label>公開設定</label>
+            <select id="pw-visibility">
+              <option value="false">Public（無料・おすすめ）</option>
+              <option value="true">Private（有料プラン必要）</option>
+            </select>
+          </div>
+        </div>
+        <div class="pwa-warn-box" id="pw-private-warn">⚠️ PrivateリポジトリでのGitHub Pages利用にはGitHub Proが必要です。</div>
+        <div class="pwa-error-box" id="pw-step0-err"></div>
+        <div class="pwa-btn-row">
+          <button class="btn-primary pwa-green" onclick="pwVerifyToken()">接続確認 & 次へ →</button>
+        </div>
+      </div>
+
+      <!-- Step2: HTML -->
+      <div class="pwa-card" id="pwa-step-1">
+        <div class="form-group">
+          <label>HTMLソースコード *</label>
+          <textarea id="pw-html" placeholder="<!DOCTYPE html>&#10;<html>&#10;...&#10;</html>" style="min-height:200px;font-family:'Consolas','Monaco',monospace;font-size:0.8rem;" spellcheck="false"></textarea>
+        </div>
+        <div class="pwa-info-box" id="pw-html-info" style="display:none;"></div>
+        <div class="pwa-btn-row">
+          <button class="pwa-btn-secondary" onclick="pwGoStep(0)">← 戻る</button>
+          <button class="btn-primary pwa-green" onclick="pwValidateHtml()">次へ →</button>
+        </div>
+      </div>
+
+      <!-- Step3: 設定 -->
+      <div class="pwa-card" id="pwa-step-2">
+        <div class="form-row">
+          <div class="form-group">
+            <label>アプリ名（フル）*</label>
+            <input type="text" id="pw-appname" placeholder="My Business App" />
+          </div>
+          <div class="form-group">
+            <label>ショートネーム *</label>
+            <input type="text" id="pw-shortname" placeholder="MyApp" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>アプリの説明</label>
+          <input type="text" id="pw-desc" placeholder="業務用ツール" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>テーマカラー</label>
+            <div class="color-row-pwa">
+              <input type="color" id="pw-theme" value="#6c63ff" oninput="pwSyncColor('pw-theme','pw-theme-hex')">
+              <input type="text" id="pw-theme-hex" value="#6c63ff" oninput="pwSyncHex('pw-theme-hex','pw-theme')" style="flex:1;">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>背景カラー</label>
+            <div class="color-row-pwa">
+              <input type="color" id="pw-bg" value="#0f1117" oninput="pwSyncColor('pw-bg','pw-bg-hex')">
+              <input type="text" id="pw-bg-hex" value="#0f1117" oninput="pwSyncHex('pw-bg-hex','pw-bg')" style="flex:1;">
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>表示モード</label>
+          <div class="display-grid-pwa">
+            <label class="display-opt sel" onclick="pwSelectDisplay(this)"><input type="radio" name="pw-display" value="standalone" class="pwa-radio" checked><div class="d-icon">📱</div><div class="d-name">Standalone</div><div class="d-desc">アプリ風・おすすめ</div></label>
+            <label class="display-opt" onclick="pwSelectDisplay(this)"><input type="radio" name="pw-display" value="fullscreen" class="pwa-radio"><div class="d-icon">⛶</div><div class="d-name">Fullscreen</div><div class="d-desc">全画面</div></label>
+            <label class="display-opt" onclick="pwSelectDisplay(this)"><input type="radio" name="pw-display" value="minimal-ui" class="pwa-radio"><div class="d-icon">🌐</div><div class="d-name">Minimal UI</div><div class="d-desc">最小限</div></label>
+            <label class="display-opt" onclick="pwSelectDisplay(this)"><input type="radio" name="pw-display" value="browser" class="pwa-radio"><div class="d-icon">🖥</div><div class="d-name">Browser</div><div class="d-desc">通常</div></label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>アプリアイコン（推奨512×512px・PNG・スキップ可）</label>
+          <div class="pwa-icon-drop" id="pw-icon-drop" ondragover="pwDragOver(event)" ondragleave="pwDragLeave()" ondrop="pwDrop(event)">
+            <input type="file" id="pw-icon-file" accept="image/*" onchange="pwHandleIcon(this.files[0])">
+            <div id="pw-icon-upload-content"><div style="font-size:24px;margin-bottom:5px;">🖼</div><div style="font-size:12px;font-weight:600;">クリックまたはドラッグ＆ドロップ</div></div>
+            <div id="pw-icon-preview-content" style="display:none;">
+              <div style="display:flex;align-items:center;gap:12px;justify-content:center;">
+                <img class="pwa-icon-preview" id="pw-icon-img" src="" alt="">
+                <div class="pwa-chip-wrap">
+                  <div class="pwa-chip" id="pw-chip-192">192px ⏳</div>
+                  <div class="pwa-chip" id="pw-chip-512">512px ⏳</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pwa-btn-row">
+          <button class="pwa-btn-secondary" onclick="pwGoStep(1)">← 戻る</button>
+          <button class="btn-primary pwa-green" onclick="pwValidateSettings()">確認してデプロイ →</button>
+        </div>
+      </div>
+
+      <!-- Step4: デプロイ -->
+      <div class="pwa-card" id="pwa-step-3">
+        <div id="pwa-deploy-summary" style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;line-height:2;"></div>
+        <div class="pwa-error-box" id="pw-deploy-err"></div>
+        <div id="pwa-progress-wrap" style="display:none;">
+          <div class="pwa-progress-bg"><div class="pwa-progress-fill" id="pwa-progress-fill"></div></div>
+          <div class="pwa-step-rows" id="pwa-step-rows"></div>
+        </div>
+        <div class="pwa-btn-row" id="pwa-deploy-btns">
+          <button class="pwa-btn-secondary" onclick="pwGoStep(2)">← 戻る</button>
+          <button class="btn-primary pwa-green" id="pwa-deploy-btn" onclick="pwStartDeploy()">🚀 デプロイ開始</button>
+        </div>
+      </div>
+
+      <!-- Step5: 完了 -->
+      <div class="pwa-card" id="pwa-step-4">
+        <div class="pwa-success-hero">
+          <div class="pwa-success-icon">🎉</div>
+          <div class="pwa-success-title">デプロイ完了！</div>
+          <p style="color:var(--muted);font-size:12px;">倉庫への登録も完了しました。</p>
+        </div>
+        <div class="pwa-url-box">
+          <div class="pwa-url-text" id="pwa-final-url">-</div>
+          <button class="pwa-copy-btn" onclick="pwCopyUrl()">📋 コピー</button>
+          <a id="pwa-open-btn" href="#" target="_blank" class="pwa-open-btn">🔗 開く</a>
+        </div>
+        <div id="pwa-qrcode"></div>
+        <div class="install-steps-pwa">
+          <h3>📱 iPhoneへのインストール手順</h3>
+          <div class="install-step-pwa"><div class="install-num-pwa">1</div><div>上のURLをiPhoneの<strong>Safari</strong>で開く</div></div>
+          <div class="install-step-pwa"><div class="install-num-pwa">2</div><div>404が出る場合は1〜2分待ってリロード</div></div>
+          <div class="install-step-pwa"><div class="install-num-pwa">3</div><div>共有ボタン（□↑）→<strong>「ホーム画面に追加」</strong></div></div>
+        </div>
+        <div class="pwa-btn-row" style="justify-content:center;">
+          <button class="pwa-btn-secondary" onclick="closePwaModal()">✕ 閉じる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- フォルダ名前入力モーダル -->
+<div class="modal-bg" id="folder-name-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="folder-name-title">📁 新しいフォルダ</h2>
+      <button class="btn-close" onclick="closeModal('folder-name-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>フォルダ名 *</label><input type="text" id="fn-name" placeholder="例: ツール系" /></div>
+        <div class="form-group"><label>絵文字アイコン</label><input type="text" id="fn-icon" placeholder="📁" maxlength="4" style="text-align:center;font-size:1.35rem;" /></div>
+      </div>
+      <button class="btn-primary" onclick="saveFolder()">💾 保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- フォルダ展開モーダル -->
+<div class="modal-bg" id="folder-view-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="folder-view-emoji" id="fv-emoji" style="font-size:28px;">📁</div>
+        <div>
+          <div class="folder-view-name" id="fv-name" style="font-size:1.2rem;font-weight:800;">フォルダ</div>
+          <div class="folder-view-count" id="fv-count" style="font-size:0.8rem;color:var(--muted);">0 個のアプリ</div>
+        </div>
+      </div>
+      <button class="btn-close" onclick="closeModal('folder-view-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="folder-view-grid" id="fv-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- HTMLビューア -->
+<div class="modal-bg" id="viewer-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="viewer-title">アプリを起動</h2>
+      <div style="display:flex;gap:7px;align-items:center;">
+        <button class="btn-icon" onclick="openInNewTab()" style="font-size:16px;">↗️</button>
+        <button class="btn-close" onclick="closeViewer()">✕</button>
+      </div>
+    </div>
+    <div id="viewer-frame-wrap">
+      <iframe id="viewer-frame" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-downloads"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- BM詳細 -->
+<div class="modal-bg" id="bm-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="bm-modal-title">🔖 ブックマークレット</h2>
+      <button class="btn-close" onclick="closeModal('bm-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="bm-detail-drag">
+        <p>👆 下のボタンをブックマークバーにドラッグして登録</p>
+        <a id="bm-detail-link" href="#" class="bm-detail-link" onclick="return false;">🔖 ドラッグしてブックマークバーへ</a>
+      </div>
+      <div style="margin-bottom:6px;font-size:0.76rem;color:var(--muted);font-weight:600;text-transform:uppercase;">コード</div>
+      <div class="bm-code" id="bm-detail-code"></div>
+      <div style="margin-top:12px;">
+        <button class="btn-primary" style="margin-top:0;" onclick="copyBmCode()">📋 コードをコピー</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 設定モーダル -->
+<div class="modal-bg" id="settings-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⚙️ 設定</h2>
+      <button class="btn-close" onclick="closeModal('settings-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="settings-section">
+        <div class="settings-section-title">🔐 Token・PIN管理</div>
+        <div class="form-group">
+          <label>GitHub Personal Access Token</label>
+          <input type="password" id="s-token" placeholder="ghp_..." autocomplete="off" />
+          <p class="form-hint">※ 入力後「保存」するとPINで暗号化してGistに保存されます。全端末で共有されます。</p>
+        </div>
+        <div class="form-group">
+          <label>PIN（4桁）</label>
+          <input type="password" id="s-pin" placeholder="新しいPINを設定（変更時のみ入力）" maxlength="4" inputmode="numeric" />
+          <p class="form-hint">※ PINを変更する場合のみ入力してください。空白のままなら現在のPINを維持します。</p>
+        </div>
+        <div class="form-group"><label>Gist ID</label><input type="text" id="s-gist" placeholder="2c2638d673da5d7f1d0762c8cb518fd1" /></div>
+        <div class="form-group"><label>ファイル名</label><input type="text" id="s-file" placeholder="webapp-warehouse.json" /></div>
+        <button class="btn-primary" onclick="saveSettings()">💾 保存して再読み込み</button>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">🎨 テーマ</div>
+        <div class="theme-toggle">
+          <div class="theme-btn active" id="theme-dark"  onclick="setTheme('dark')"><span class="t-icon">🌙</span>ダークモード</div>
+          <div class="theme-btn" id="theme-light" onclick="setTheme('light')"><span class="t-icon">☀️</span>ライトモード</div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">📊 Gist 使用容量</div>
+        <div class="storage-info">
+          <div class="storage-top"><div class="storage-used" id="st-used">-</div><div class="storage-limit">推奨上限: 10 MB</div></div>
+          <div class="storage-bar-bg"><div class="storage-bar-fill" id="st-bar" style="width:0%"></div></div>
+          <div class="storage-detail">
+            <div>アプリ数: <span id="st-apps">-</span></div>
+            <div>フォルダ数: <span id="st-folders">-</span></div>
+            <div>残り容量: <span id="st-remain">-</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-title">📋 現在の接続情報</div>
+        <div class="key-card">
+          <div class="key-card-label">Gist ID</div>
+          <div class="key-card-val"><span id="st-gist-disp">-</span><button class="key-copy-btn" onclick="copyText(getCfg().gistId,'Gist IDをコピーしました')">コピー</button></div>
+        </div>
+        <div class="key-card">
+          <div class="key-card-label">Token状態</div>
+          <div class="key-card-val"><span id="st-token-status">-</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 削除確認 -->
+<div class="modal-bg" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-body">
+      <div class="confirm-icon">🗑️</div>
+      <h2 style="margin-bottom:7px;">削除しますか？</h2>
+      <p class="confirm-msg" id="confirm-msg"></p>
+      <div class="confirm-btns">
+        <button class="btn-cancel" onclick="closeModal('confirm-modal')">キャンセル</button>
+        <button class="btn-delete" id="confirm-delete-btn">削除する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PINモーダル -->
+<div class="modal-bg" id="pin-modal">
+  <div class="modal">
+    <div class="modal-body">
+      <div class="pin-icon" id="pin-icon">🔐</div>
+      <div class="pin-title" id="pin-title">PINを入力</div>
+      <div class="pin-sub"  id="pin-sub">4桁のPINを入力してください</div>
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+      </div>
+      <div class="pin-err-msg" id="pin-err"></div>
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+        <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+        <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+        <button class="pin-key" onclick="pinClear()">✕</button><button class="pin-key" onclick="pinKey('0')">0</button><button class="pin-key" onclick="pinBack()">⌫</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ===== 定数 =====
+const DEFAULT_GIST_ID  = '2c2638d673da5d7f1d0762c8cb518fd1';
+const DEFAULT_FILE     = 'webapp-warehouse.json';
+const TOKEN_FILE       = 'ww-token.enc';
+const GIST_LIMIT_BYTES = 10 * 1024 * 1024;
+
+// ===== Config =====
+function getCfg() { try { const s=localStorage.getItem('ww-cfg'); if(s) return JSON.parse(s); } catch(e){} return {gistId:DEFAULT_GIST_ID,file:DEFAULT_FILE}; }
+function setCfg(cfg) { localStorage.setItem('ww-cfg',JSON.stringify(cfg)); }
+function getAPI() { return `https://api.github.com/gists/${getCfg().gistId}`; }
+
+// ===== AES暗号化 =====
+async function pinToKey(pin) { const enc=new TextEncoder(); return crypto.subtle.importKey('raw',enc.encode(pin.padEnd(16,'0')),'AES-GCM',false,['encrypt','decrypt']); }
+async function encryptToken(token,pin) { const key=await pinToKey(pin); const enc=new TextEncoder(); const iv=crypto.getRandomValues(new Uint8Array(12)); const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(token)); const combined=new Uint8Array(iv.byteLength+ct.byteLength); combined.set(iv,0); combined.set(new Uint8Array(ct),iv.byteLength); return btoa(String.fromCharCode(...combined)); }
+async function decryptToken(encB64,pin) { try { const key=await pinToKey(pin); const combined=Uint8Array.from(atob(encB64),c=>c.charCodeAt(0)); const iv=combined.slice(0,12); const ct=combined.slice(12); const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct); return new TextDecoder().decode(pt); } catch(e){return null;} }
+
+// ===== Token管理 =====
+let _token='';
+async function saveEncryptedToken(ghToken,pin) {
+  const enc=await encryptToken(ghToken,pin);
+  const res=await fetch(getAPI(),{method:'PATCH',headers:{'Authorization':`token ${ghToken}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({files:{[TOKEN_FILE]:{content:enc}}})});
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+}
+
+// ===== PIN UI =====
+let _pinInput='',_pinMode='',_pinResolve=null,_pinSetupFirst='';
+function openPinModal(mode,title,sub,icon) { _pinMode=mode; _pinInput=''; _pinSetupFirst=''; document.getElementById('pin-title').textContent=title||'PINを入力'; document.getElementById('pin-sub').textContent=sub||'4桁のPINを入力してください'; document.getElementById('pin-icon').textContent=icon||'🔐'; document.getElementById('pin-err').textContent=''; updatePinDots(); openModal('pin-modal'); return new Promise(resolve=>{_pinResolve=resolve;}); }
+function pinKey(d) { if(_pinInput.length>=4) return; _pinInput+=d; updatePinDots(); if(_pinInput.length===4) setTimeout(()=>handlePinComplete(),180); }
+function pinBack()  { _pinInput=_pinInput.slice(0,-1); updatePinDots(); }
+function pinClear() { _pinInput=''; updatePinDots(); document.getElementById('pin-err').textContent=''; }
+function updatePinDots(state) { for(let i=0;i<4;i++){const d=document.getElementById('pd'+i); d.className='pin-dot'; if(state==='error') d.classList.add('error'); else if(i<_pinInput.length) d.classList.add('filled');} }
+async function handlePinComplete() {
+  if(_pinMode==='setup') {
+    if(!_pinSetupFirst) { _pinSetupFirst=_pinInput; _pinInput=''; document.getElementById('pin-title').textContent='PINを再入力'; document.getElementById('pin-sub').textContent='確認のためもう一度入力してください'; updatePinDots(); }
+    else { if(_pinInput===_pinSetupFirst){closeModal('pin-modal');_pinResolve&&_pinResolve(_pinInput);}else{document.getElementById('pin-err').textContent='❌ PINが一致しません。もう一度';updatePinDots('error');_pinInput='';_pinSetupFirst='';document.getElementById('pin-title').textContent='PINを設定';document.getElementById('pin-sub').textContent='新しい4桁のPINを入力してください';setTimeout(()=>updatePinDots(),500);} }
+  } else { closeModal('pin-modal'); _pinResolve&&_pinResolve(_pinInput); }
+}
+
+// ===== モーダル =====
+let currentZIndex=300;
+function openModal(id) { currentZIndex+=10; const el=document.getElementById(id); el.style.zIndex=currentZIndex; el.classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ===== 起動フロー =====
+async function init() {
+  const saved=localStorage.getItem('ww-theme'); if(saved) document.documentElement.setAttribute('data-theme',saved);
+  buildIconGrid();
+  const cfg=getCfg();
+  if(!cfg.gistId){setStatus('offline','未設定');openSettings();return;}
+  if(cfg.cachedToken){_token=cfg.cachedToken;const ok=await tryLoadData();if(ok)return;_token='';}
+  await unlockWithPin();
+}
+async function unlockWithPin() {
+  setStatus('loading','PIN認証中...');
+  const pin=await openPinModal('unlock','🔐 PIN認証','4桁のPINを入力してください','🔐');
+  setStatus('loading','Token復元中...');
+  let decrypted=null;
+  try { const res=await fetch(getAPI()+`?t=${Date.now()}`,{headers:{'Accept':'application/vnd.github.v3+json'}}); if(res.ok){const gist=await res.json();const f=gist.files[TOKEN_FILE];if(f){const enc=f.truncated?await(await fetch(f.raw_url)).text():f.content;decrypted=await decryptToken(enc.trim(),pin);}}} catch(e){}
+  if(!decrypted){setStatus('offline','PIN不一致またはToken未登録');showToast('❌ PINが違うか、Tokenがまだ保存されていません');openSettings();return;}
+  _token=decrypted; const c=getCfg(); c.cachedToken=_token; setCfg(c);
+  const ok=await tryLoadData();
+  if(!ok){showToast('❌ Tokenが無効または期限切れです。設定から更新してください');openSettings();}
+}
+async function tryLoadData() {
+  if(!_token) return false;
+  setStatus('loading');
+  try {
+    const res=await fetch(getAPI()+`?t=${Date.now()}`,{headers:{'Authorization':`token ${_token}`,'Accept':'application/vnd.github.v3+json'}});
+    if(!res.ok){setStatus('offline','エラー: HTTP '+res.status);return false;}
+    const gist=await res.json(); const cfg=getCfg();
+    const fileObj=gist.files[cfg.file||DEFAULT_FILE];
+    if(!fileObj) throw new Error(`${cfg.file} が見つかりません`);
+    const content=fileObj.truncated?await(await fetch(fileObj.raw_url)).text():fileObj.content;
+    const data=JSON.parse(content); apps=data.apps||[]; folders=data.folders||[];
+    setStatus('online'); renderAll(); return true;
+  } catch(e){setStatus('offline','エラー: '+e.message);return false;}
+}
+
+// ===== Settings =====
+function openSettings() {
+  const cfg=getCfg();
+  document.getElementById('s-token').value=''; document.getElementById('s-pin').value='';
+  document.getElementById('s-gist').value=cfg.gistId||DEFAULT_GIST_ID;
+  document.getElementById('s-file').value=cfg.file||DEFAULT_FILE;
+  const content=JSON.stringify({apps,folders},null,2); const bytes=new Blob([content]).size;
+  const pct=Math.min((bytes/GIST_LIMIT_BYTES)*100,100);
+  document.getElementById('st-used').textContent=formatBytes(bytes);
+  document.getElementById('st-apps').textContent=apps.length;
+  document.getElementById('st-folders').textContent=folders.length;
+  document.getElementById('st-remain').textContent=formatBytes(Math.max(GIST_LIMIT_BYTES-bytes,0));
+  document.getElementById('st-gist-disp').textContent=cfg.gistId||'-';
+  document.getElementById('st-token-status').textContent=_token?'✅ 設定済み（復号済み）':'⚠️ 未設定';
+  const bar=document.getElementById('st-bar'); bar.style.width=pct+'%';
+  bar.className='storage-bar-fill'+(pct>80?' danger':pct>50?' warn':'');
+  const theme=document.documentElement.getAttribute('data-theme');
+  document.getElementById('theme-dark').classList.toggle('active',theme==='dark');
+  document.getElementById('theme-light').classList.toggle('active',theme==='light');
+  openModal('settings-modal');
+}
+async function saveSettings() {
+  const newToken=document.getElementById('s-token').value.trim();
+  const newPin=document.getElementById('s-pin').value.trim();
+  const gistId=document.getElementById('s-gist').value.trim()||DEFAULT_GIST_ID;
+  const file=document.getElementById('s-file').value.trim()||DEFAULT_FILE;
+  const cfg=getCfg(); cfg.gistId=gistId; cfg.file=file;
+  if(newToken){
+    let pin=newPin;
+    if(!pin){pin=await openPinModal('unlock','🔐 現在のPINを入力','Tokenを暗号化するPINを入力','🔑');}
+    else{if(newPin.length<4){showToast('⚠️ PINは4桁で入力してください');return;}pin=await openPinModal('setup','🔐 新しいPINを設定','新しい4桁のPINを入力してください','🔑');}
+    try{setStatus('loading','Token保存中...');await saveEncryptedToken(newToken,pin);_token=newToken;cfg.cachedToken=newToken;setCfg(cfg);closeModal('settings-modal');showToast('✅ Token・PINを保存しました。全端末に反映されます');await tryLoadData();}
+    catch(e){setStatus('offline','エラー: '+e.message);showToast('❌ 保存失敗: '+e.message);}
+  } else {setCfg(cfg);closeModal('settings-modal');showToast('✅ 設定を保存しました');if(_token)await tryLoadData();}
+}
+
+// ===== Gist保存 =====
+async function saveToGist() {
+  if(!_token){showToast('⚠️ Token未設定');return;}
+  const cfg=getCfg(); const content=JSON.stringify({apps,folders},null,2);
+  const res=await fetch(getAPI(),{method:'PATCH',headers:{'Authorization':`token ${_token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({files:{[cfg.file||DEFAULT_FILE]:{content}}})});
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+}
+
+// ===== アプリロジック =====
+const ICONS=['🎨','📊','🎵','🎮','🧮','🗒️','🌐','⏰','📷','🔐','🗺️','💡','📝','🔧','📱','🚀','🌈','🎯','🧩','🛠️','🔖','🔗','📄','⚡','🎁','🧪','🌟','🏠','🎪','🔬'];
+const TYPE_META={
+  html:{ label:'HTML', icon:'📄', badge:'html', bgClass:'html-bg', overlay:'▶ 起動' },
+  url: { label:'URL',  icon:'🔗', badge:'url',  bgClass:'url-bg',  overlay:'↗ 開く' },
+  bm:  { label:'BM',   icon:'🔖', badge:'bm',   bgClass:'bm-bg',   overlay:'🔖 詳細' },
+  pwa: { label:'PWA',  icon:'⚡', badge:'pwa',  bgClass:'pwa-bg',  overlay:'↗ 開く' },
+};
+let apps=[], folders=[], editingId=null, editingFolderId=null;
+let currentType='html', filterType='all', viewerHtml='', currentBmCode='';
+
+function setStatus(s,msg) { document.getElementById('db-dot').className='db-dot '+s; document.getElementById('db-label').textContent=msg||{loading:'接続中...',online:'同期済み',offline:'エラー'}[s]; }
+function setFilter(type) { filterType=type; document.querySelectorAll('.type-filter').forEach(b=>{b.className='type-filter';if(b.dataset.filter===type)b.classList.add('active-'+type);}); renderAll(); }
+
+function renderAll() {
+  const q=document.getElementById('search-input')?.value.toLowerCase()||'';
+  const sort=document.getElementById('sort-select')?.value||'newest';
+  const wrap=document.getElementById('main-grid');
+  document.getElementById('count-badge').textContent=`${apps.length} apps`;
+  if(q){
+    let list=apps.filter(a=>(filterType==='all'||a.type===filterType)&&(a.name.toLowerCase().includes(q)||(a.desc||'').toLowerCase().includes(q)));
+    list=sortApps(list,sort);
+    wrap.innerHTML=`<div class="app-grid">${list.length?list.map(a=>appCardHTML(a)).join(''):`<div class="empty-state"><div class="big-icon">📭</div><h2>見つかりませんでした</h2></div>`}</div>`;
+    return;
+  }
+  let html='';
+  if(folders.length>0){html+=`<div class="section-label">📁 フォルダ</div><div class="app-grid">`;folders.forEach(f=>{html+=folderCardHTML(f);});html+=`</div>`;}
+  let loose=apps.filter(a=>!a.folderId&&(filterType==='all'||a.type===filterType));
+  loose=sortApps(loose,sort);
+  if(folders.length) html+=`<div class="section-label">📄 アプリ</div>`;
+  if(loose.length===0&&folders.length===0){html+=`<div class="app-grid"><div class="empty-state"><div class="big-icon">📭</div><h2>まだアプリがありません</h2><p>右下の ＋ ボタンから登録しましょう！</p></div></div>`;}
+  else if(loose.length>0){html+=`<div class="app-grid">${loose.map(a=>appCardHTML(a)).join('')}</div>`;}
+  wrap.innerHTML=html;
+}
+
+function folderCardHTML(f) {
+  const children=apps.filter(a=>a.folderId===f.id).slice(0,8);
+  const thumbs=Array(8).fill(null).map((_,i)=>{const a=children[i];return `<div class="thumb-cell${a?'':' empty'}">${a?(a.icon||TYPE_META[a.type||'html'].icon):''}</div>`;}).join('');
+  return `<div class="folder-card" id="folder-${f.id}" onclick="openFolderView('${f.id}')" ondragover="folderDragOver(event,'${f.id}')" ondragleave="folderDragLeave(event,'${f.id}')" ondrop="folderDrop(event,'${f.id}')">
+    <div class="folder-header"><div class="folder-emoji">${f.icon||'📁'}</div><div class="folder-info"><div class="folder-name">${escHtml(f.name)}</div><div class="folder-count">${apps.filter(a=>a.folderId===f.id).length} 個のアプリ</div></div></div>
+    <div class="folder-thumbs">${thumbs}</div>
+    <div class="card-footer" onclick="event.stopPropagation()">
+      <button class="btn-icon" onclick="openRegisterModal('${f.id}')" title="追加">＋</button>
+      <button class="btn-icon" onclick="openFolderNameModal('${f.id}')" title="編集">✏️</button>
+      <button class="btn-icon danger" onclick="confirmDeleteFolder('${f.id}','${escAttr(f.name)}')" title="削除">🗑️</button>
+    </div></div>`;
+}
+
+function appCardHTML(a) {
+  const t=a.type||'html', m=TYPE_META[t]||TYPE_META.html, icon=a.icon||m.icon;
+  let extra='';
+  if(t==='url') extra=`<div class="card-url-preview">${escHtml(a.url||'')}</div>`;
+  if(t==='bm')  extra=`<div class="bm-drag-area"><a class="bm-drag-link" href="${escAttr(a.bm||'')}" onclick="event.preventDefault();openBmModal('${a.id}')" title="ドラッグ→ブックマークバーへ">🔖 ${escHtml(a.name)}</a></div>`;
+  if(t==='pwa') extra=`<div class="card-pwa-url">${escHtml(a.url||'')}</div>`;
+  return `<div class="app-card type-${t}" id="app-${a.id}" draggable="true" ondragstart="appDragStart(event,'${a.id}')" ondragend="appDragEnd(event)" onclick="handleCardClick('${a.id}')">
+    <span class="drag-hint">✥ drag</span>
+    <span class="type-badge ${m.badge}">${m.icon} ${m.label}</span>
+    <div class="card-icon ${m.bgClass}">${icon}<div class="preview-overlay">${m.overlay}</div></div>
+    <div class="card-body">
+      <div class="card-name">${escHtml(a.name)}</div>
+      <div class="card-desc">${escHtml(a.desc||'説明なし')}</div>
+      ${extra}
+      <div class="card-meta">📅 ${formatDate(a.createdAt)}</div>
+    </div>
+    <div class="card-footer" onclick="event.stopPropagation()">
+      ${t==='html'?`<button class="btn-icon" onclick="copyHtml('${a.id}')" title="HTMLコピー">📋</button>`:''}
+      ${t==='url'||t==='pwa'?`<button class="btn-icon" onclick="window.open('${escAttr(a.url||'')}','_blank')" title="開く">↗️</button>`:''}
+      ${t==='bm'?`<button class="btn-icon" onclick="copyBmById('${a.id}')" title="コードコピー">📋</button>`:''}
+      ${t==='pwa'?`<button class="btn-icon" onclick="pwShowQr('${escAttr(a.url||'')}',event)" title="QRコード">📱</button>`:''}
+      <button class="btn-icon" onclick="openEditModal('${a.id}')" title="編集">✏️</button>
+      <button class="btn-icon danger" onclick="confirmDelete('${a.id}','${escAttr(a.name)}')" title="削除">🗑️</button>
+    </div></div>`;
+}
+
+// ===== ドラッグ =====
+let dragAppId=null;
+function appDragStart(e,id){dragAppId=id;setTimeout(()=>{const el=document.getElementById('app-'+id);if(el)el.classList.add('dragging');},0);}
+function appDragEnd(){if(dragAppId){const el=document.getElementById('app-'+dragAppId);if(el)el.classList.remove('dragging');}dragAppId=null;document.querySelectorAll('.folder-card').forEach(f=>f.classList.remove('drag-over'));}
+function folderDragOver(e,id){e.preventDefault();const el=document.getElementById('folder-'+id);if(el)el.classList.add('drag-over');}
+function folderDragLeave(e,id){const el=document.getElementById('folder-'+id);if(el)el.classList.remove('drag-over');}
+async function folderDrop(e,folderId){e.preventDefault();e.stopPropagation();const el=document.getElementById('folder-'+folderId);if(el)el.classList.remove('drag-over');if(!dragAppId)return;const idx=apps.findIndex(a=>a.id===dragAppId);if(idx===-1)return;apps[idx].folderId=folderId;dragAppId=null;try{await saveToGist();showToast('📁 フォルダに移動しました');renderAll();}catch(e){showToast('❌ 保存失敗: '+e.message);}}
+
+// ===== フォルダ =====
+function openFolderView(folderId){const f=folders.find(x=>x.id===folderId);if(!f)return;const children=apps.filter(a=>a.folderId===folderId);document.getElementById('fv-emoji').textContent=f.icon||'📁';document.getElementById('fv-name').textContent=f.name;document.getElementById('fv-count').textContent=`${children.length} 個のアプリ`;document.getElementById('fv-grid').innerHTML=children.length?children.map(a=>appCardHTML(a)).join(''):`<div class="empty-state" style="grid-column:1/-1;padding:40px 0;"><div class="big-icon">📭</div><h2>まだアプリがありません</h2></div>`;openModal('folder-view-modal');}
+function openFolderNameModal(folderId){editingFolderId=folderId;if(folderId){const f=folders.find(x=>x.id===folderId);document.getElementById('folder-name-title').textContent='✏️ フォルダを編集';document.getElementById('fn-name').value=f?.name||'';document.getElementById('fn-icon').value=f?.icon||'';}else{document.getElementById('folder-name-title').textContent='📁 新しいフォルダ';document.getElementById('fn-name').value='';document.getElementById('fn-icon').value='';}openModal('folder-name-modal');}
+async function saveFolder(){const name=document.getElementById('fn-name').value.trim();const icon=document.getElementById('fn-icon').value.trim()||'📁';if(!name){showToast('⚠️ フォルダ名を入力してください');return;}if(editingFolderId){const idx=folders.findIndex(f=>f.id===editingFolderId);if(idx!==-1)folders[idx]={...folders[idx],name,icon};}else{folders.push({id:uid(),name,icon,createdAt:Date.now()});}try{await saveToGist();closeModal('folder-name-modal');showToast(editingFolderId?'✅ フォルダを更新しました':'✅ フォルダを作成しました');renderAll();}catch(e){showToast('❌ 保存失敗: '+e.message);}}
+function confirmDeleteFolder(id,name){document.getElementById('confirm-msg').textContent=`フォルダ「${name}」を削除します。中のアプリはフォルダなし状態になります。`;document.getElementById('confirm-delete-btn').onclick=async()=>{apps=apps.map(a=>a.folderId===id?{...a,folderId:null}:a);folders=folders.filter(f=>f.id!==id);try{await saveToGist();closeModal('confirm-modal');showToast('🗑️ フォルダを削除しました');renderAll();}catch(e){showToast('❌ 削除失敗: '+e.message);}};openModal('confirm-modal');}
+
+// ===== アプリ操作 =====
+function handleCardClick(id){const a=apps.find(x=>x.id===id);if(!a)return;const t=a.type||'html';if(t==='html')openApp(id);if(t==='url'||t==='pwa')window.open(a.url,'_blank');if(t==='bm')openBmModal(id);}
+function openApp(id){const a=apps.find(x=>x.id===id);if(!a)return;viewerHtml=a.html;document.getElementById('viewer-title').textContent=`${a.icon||'📄'} ${a.name}`;document.getElementById('viewer-frame').srcdoc=a.html;openModal('viewer-modal');}
+function closeViewer(){document.getElementById('viewer-frame').srcdoc='';closeModal('viewer-modal');}
+function openInNewTab(){if(!viewerHtml)return;window.open(URL.createObjectURL(new Blob([viewerHtml],{type:'text/html'})),'_blank');}
+function copyHtml(id){const a=apps.find(x=>x.id===id);if(a)navigator.clipboard.writeText(a.html).then(()=>showToast('📋 HTMLをコピーしました！'));}
+function openBmModal(id){const a=apps.find(x=>x.id===id);if(!a)return;currentBmCode=a.bm||'';document.getElementById('bm-modal-title').textContent=`🔖 ${a.name}`;document.getElementById('bm-detail-link').href=a.bm||'#';document.getElementById('bm-detail-link').textContent=`🔖 ${a.name}`;document.getElementById('bm-detail-code').textContent=a.bm||'';openModal('bm-modal');}
+function copyBmCode(){navigator.clipboard.writeText(currentBmCode).then(()=>showToast('📋 コードをコピーしました！'));}
+function copyBmById(id){const a=apps.find(x=>x.id===id);if(a)navigator.clipboard.writeText(a.bm||'').then(()=>showToast('📋 コードをコピーしました！'));}
+
+// PWAカードのQRコード表示（ポップアップ）
+function pwShowQr(url, event) {
+  event.stopPropagation();
+  if (!url) return;
+  const existing = document.getElementById('qr-popup');
+  if (existing) existing.remove();
+  const popup = document.createElement('div');
+  popup.id = 'qr-popup';
+  popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  popup.innerHTML = `<div style="background:var(--surface);border-radius:16px;padding:24px;text-align:center;border:1px solid var(--border);">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">📱 iPhoneのSafariで読み取る</div>
+    <div id="qr-popup-inner"></div>
+    <div style="font-size:11px;color:var(--type-pwa);margin-top:10px;font-family:monospace;word-break:break-all;max-width:200px;">${url}</div>
+    <button onclick="document.getElementById('qr-popup').remove()" style="margin-top:14px;padding:8px 20px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;">閉じる</button>
+  </div>`;
+  document.body.appendChild(popup);
+  popup.addEventListener('click', e => { if (e.target === popup) popup.remove(); });
+  try { new QRCode(document.getElementById('qr-popup-inner'), { text: url, width: 180, height: 180, colorDark: '#6c63ff', colorLight: '#1a1d27' }); } catch(e) {}
+}
+
+// ===== 登録・編集モーダル =====
+function openRegisterModal(folderId){
+  editingId=null;
+  document.getElementById('modal-title').textContent='📥 アプリを登録';
+  ['f-name','f-icon-input','f-desc','f-html','f-url','f-bm'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('.icon-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.type-tab').forEach(t=>t.style.pointerEvents='');
+  populateFolderSelect(folderId);
+  selectType('html');
+  openModal('register-modal');
+}
+function populateFolderSelect(selectedId){document.getElementById('f-folder').innerHTML=`<option value="">フォルダなし（トップに表示）</option>`+folders.map(f=>`<option value="${f.id}" ${f.id===selectedId?'selected':''}>${f.icon||'📁'} ${escHtml(f.name)}</option>`).join('');}
+function openEditModal(id){
+  const a=apps.find(x=>x.id===id); if(!a) return;
+  editingId=id; const t=a.type||'html';
+  document.getElementById('modal-title').textContent='✏️ アプリを編集';
+  document.getElementById('f-name').value=a.name;
+  document.getElementById('f-icon-input').value=a.icon||'';
+  document.getElementById('f-desc').value=a.desc||'';
+  document.getElementById('f-html').value=a.html||'';
+  document.getElementById('f-url').value=a.url||'';
+  document.getElementById('f-bm').value=a.bm||'';
+  populateFolderSelect(a.folderId||'');
+  document.querySelectorAll('.type-tab').forEach(tab=>tab.style.pointerEvents='none');
+  selectType(t);
+  openModal('register-modal');
+}
+async function saveApp(){
+  const name=document.getElementById('f-name').value.trim();
+  const icon=document.getElementById('f-icon-input').value.trim()||TYPE_META[currentType].icon;
+  const desc=document.getElementById('f-desc').value.trim();
+  const folderId=document.getElementById('f-folder').value||null;
+  if(!name){showToast('⚠️ アプリ名を入力してください');return;}
+  if(currentType==='pwa'){showToast('⚠️ PWAはウィザードからデプロイしてください');return;}
+  let extra={};
+  if(currentType==='html'){const html=document.getElementById('f-html').value.trim();if(!html){showToast('⚠️ HTMLコードを入力してください');return;}extra={html};}
+  if(currentType==='url'){const url=document.getElementById('f-url').value.trim();if(!url){showToast('⚠️ URLを入力してください');return;}extra={url};}
+  if(currentType==='bm'){const bm=document.getElementById('f-bm').value.trim();if(!bm){showToast('⚠️ コードを入力してください');return;}if(!bm.startsWith('javascript:')){showToast('⚠️ javascript: から始まるコードを入力してください');return;}extra={bm};}
+  setSaveLoading(true);
+  try{
+    if(editingId){const idx=apps.findIndex(a=>a.id===editingId);if(idx!==-1)apps[idx]={...apps[idx],name,icon,desc,folderId,...extra,updatedAt:Date.now()};}
+    else{apps.push({id:uid(),type:currentType,name,icon,desc,folderId,...extra,createdAt:Date.now()});}
+    await saveToGist(); showToast(editingId?'✅ 更新しました！':'✅ 登録しました！');
+    closeModal('register-modal'); renderAll();
+    const fvModal=document.getElementById('folder-view-modal');
+    if(fvModal.classList.contains('open')&&folderId) openFolderView(folderId);
+  }catch(e){showToast('❌ 保存失敗: '+e.message);}
+  finally{setSaveLoading(false);}
+}
+function setSaveLoading(on){document.getElementById('save-btn').disabled=on;document.getElementById('save-spinner').style.display=on?'block':'none';document.getElementById('save-label').textContent=on?'保存中...':'💾 保存する';}
+function confirmDelete(id,name){document.getElementById('confirm-msg').textContent=`「${name}」を削除すると元に戻せません。`;document.getElementById('confirm-delete-btn').onclick=async()=>{apps=apps.filter(a=>a.id!==id);try{await saveToGist();closeModal('confirm-modal');closeModal('folder-view-modal');showToast('🗑️ 削除しました');renderAll();}catch(e){showToast('❌ 削除失敗: '+e.message);}};openModal('confirm-modal');}
+function selectType(type){
+  currentType=type;
+  document.querySelectorAll('.type-tab').forEach(t=>{t.className='type-tab';if(t.dataset.type===type)t.classList.add('sel-'+type);});
+  document.getElementById('field-html').classList.toggle('visible',type==='html');
+  document.getElementById('field-url').classList.toggle('visible',type==='url');
+  document.getElementById('field-bm').classList.toggle('visible',type==='bm');
+  document.getElementById('field-pwa').classList.toggle('visible',type==='pwa');
+  // PWAタイプは保存ボタン不要
+  document.getElementById('save-btn').style.display=type==='pwa'?'none':'flex';
+}
+function selectIcon(emoji){document.getElementById('f-icon-input').value=emoji;document.querySelectorAll('.icon-btn').forEach(b=>b.classList.toggle('selected',b.textContent===emoji));}
+function selectIconFromInput(val){document.querySelectorAll('.icon-btn').forEach(b=>b.classList.toggle('selected',b.textContent===val));}
+
+// ===== テーマ =====
+function setTheme(theme){document.documentElement.setAttribute('data-theme',theme);localStorage.setItem('ww-theme',theme);document.getElementById('theme-dark').classList.toggle('active',theme==='dark');document.getElementById('theme-light').classList.toggle('active',theme==='light');showToast(theme==='dark'?'🌙 ダークモード':'☀️ ライトモード');}
+
+// ===== モーダル背景クリック =====
+document.querySelectorAll('.modal-bg').forEach(bg=>{bg.addEventListener('click',e=>{if(e.target!==bg)return;if(bg.id==='viewer-modal')closeViewer();else if(bg.id==='pin-modal')return;else if(bg.id==='pwa-modal')return;else closeModal(bg.id);});});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;closeViewer();['register-modal','folder-name-modal','folder-view-modal','bm-modal','settings-modal','confirm-modal'].forEach(closeModal);});
+
+// ===== Toast =====
+let toastTimer;
+function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2800);}
+
+// ===== ユーティリティ =====
+function sortApps(list,sort){if(sort==='newest')return[...list].sort((a,b)=>b.createdAt-a.createdAt);if(sort==='oldest')return[...list].sort((a,b)=>a.createdAt-b.createdAt);if(sort==='name')return[...list].sort((a,b)=>a.name.localeCompare(b.name));return list;}
+function uid(){return Math.random().toString(36).slice(2)+Date.now().toString(36);}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escAttr(s){return String(s).replace(/'/g,"\\'").replace(/"/g,'&quot;');}
+function formatDate(ts){if(!ts)return'---';return new Date(ts).toLocaleDateString('ja-JP',{year:'numeric',month:'short',day:'numeric'});}
+function formatBytes(b){if(b<1024)return b+' B';if(b<1024*1024)return(b/1024).toFixed(1)+' KB';return(b/1024/1024).toFixed(2)+' MB';}
+function copyText(text,msg){navigator.clipboard.writeText(text).then(()=>showToast('📋 '+msg));}
+function buildIconGrid(){document.getElementById('icon-grid').innerHTML=ICONS.map(ic=>`<button class="icon-btn" onclick="selectIcon('${ic}')">${ic}</button>`).join('');}
+
+// ===== ツールバー =====
+document.querySelector('main').insertAdjacentHTML('afterbegin',`
+  <div class="toolbar">
+    <div class="search-wrap"><input type="text" id="search-input" placeholder="アプリを検索..." oninput="renderAll()" /></div>
+    <select id="sort-select" onchange="renderAll()">
+      <option value="newest">新しい順</option><option value="oldest">古い順</option><option value="name">名前順</option>
+    </select>
+    <div class="type-filters">
+      <button class="type-filter active-all" data-filter="all"  onclick="setFilter('all')">すべて</button>
+      <button class="type-filter" data-filter="html" onclick="setFilter('html')">📄 HTML</button>
+      <button class="type-filter" data-filter="url"  onclick="setFilter('url')">🔗 URL</button>
+      <button class="type-filter" data-filter="bm"   onclick="setFilter('bm')">🔖 ブックマークレット</button>
+      <button class="type-filter" data-filter="pwa"  onclick="setFilter('pwa')">⚡ PWA</button>
+    </div>
+    <button class="btn-new-folder" onclick="openFolderNameModal(null)">📁 新しいフォルダ</button>
+  </div>
+`);
+
+// ============================================================
+// ===== PWAデプロイウィザード =====
+// ============================================================
+let pwStep=0, pwUser='', pwToken='', pwIconData={img192:null,img512:null}, pwIconUrl=null, pwDeployedUrl='', pwFolderIdForSave=null;
+
+function openPwaWizard(){
+  // 倉庫のTokenを自動引き継ぎ
+  pwToken = _token || '';
+  if(pwToken) document.getElementById('pw-token').placeholder = '設定済みのTokenを使用します（変更する場合のみ入力）';
+  pwStep=0; pwUser=''; pwIconData={img192:null,img512:null}; pwIconUrl=null; pwDeployedUrl='';
+  pwFolderIdForSave = document.getElementById('f-folder')?.value||null;
+  // ステッパーリセット
+  for(let i=0;i<5;i++){
+    document.getElementById('psi-'+i).className='pwa-step-item'+(i===0?' pwa-active':'');
+    document.getElementById('pwa-step-'+i).className='pwa-card'+(i===0?' pwa-active':'');
+    if(i<4)document.getElementById('psl-'+i).className='pwa-step-line';
+  }
+  document.getElementById('pw-step0-err').style.display='none';
+  document.getElementById('pwa-progress-wrap').style.display='none';
+  document.getElementById('pwa-deploy-btns').style.display='flex';
+  document.getElementById('pwa-deploy-btn').disabled=false;
+  document.getElementById('pwa-deploy-btn').textContent='🚀 デプロイ開始';
+  document.getElementById('pw-deploy-err').style.display='none';
+  document.getElementById('pwa-qrcode').innerHTML='';
+  closeModal('register-modal');
+  openModal('pwa-modal');
+}
+
+function closePwaModal(){closeModal('pwa-modal');}
+
+function pwGoStep(n){
+  document.getElementById('pwa-step-'+pwStep).className='pwa-card';
+  document.getElementById('psi-'+pwStep).className='pwa-step-item'+(n>pwStep?' pwa-done':'');
+  if(n>pwStep&&pwStep<4){document.getElementById('psl-'+pwStep).className='pwa-step-line pwa-done';}
+  else if(n<pwStep){
+    for(let i=n;i<=pwStep;i++){document.getElementById('psi-'+i).className='pwa-step-item';if(i<4)document.getElementById('psl-'+i).className='pwa-step-line';}
+  }
+  pwStep=n;
+  document.getElementById('pwa-step-'+n).className='pwa-card pwa-active';
+  document.getElementById('psi-'+n).className='pwa-step-item pwa-active';
+}
+
+function pwToggleVis(){const el=document.getElementById('pw-token');el.type=el.type==='password'?'text':'password';}
+function pwSanitizeRepo(el){el.value=el.value.toLowerCase().replace(/[^a-z0-9-_]/g,'-');}
+function pwSyncColor(cId,hId){document.getElementById(hId).value=document.getElementById(cId).value;}
+function pwSyncHex(hId,cId){const v=document.getElementById(hId).value;if(/^#[0-9a-fA-F]{6}$/.test(v))document.getElementById(cId).value=v;}
+function pwSelectDisplay(el){document.querySelectorAll('.display-opt').forEach(o=>o.classList.remove('sel'));el.classList.add('sel');el.querySelector('input').checked=true;}
+function pwDragOver(e){e.preventDefault();document.getElementById('pw-icon-drop').classList.add('dragover');}
+function pwDragLeave(){document.getElementById('pw-icon-drop').classList.remove('dragover');}
+function pwDrop(e){e.preventDefault();document.getElementById('pw-icon-drop').classList.remove('dragover');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))pwHandleIcon(f);}
+function pwHandleIcon(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const src=e.target.result; pwIconUrl=src;
+    document.getElementById('pw-icon-img').src=src;
+    document.getElementById('pw-icon-img').style.display='block';
+    document.getElementById('pw-icon-upload-content').style.display='none';
+    document.getElementById('pw-icon-preview-content').style.display='block';
+    pwResizeIcon(src,192,'img192','pw-chip-192');
+    pwResizeIcon(src,512,'img512','pw-chip-512');
+  };
+  reader.readAsDataURL(file);
+}
+function pwResizeIcon(src,size,key,chipId){
+  const canvas=document.createElement('canvas');canvas.width=size;canvas.height=size;
+  const img=new Image();
+  img.onload=()=>{canvas.getContext('2d').drawImage(img,0,0,size,size);pwIconData[key]=canvas.toDataURL('image/png').split(',')[1];const chip=document.getElementById(chipId);chip.textContent=size+'px ✓';chip.classList.add('ready');};
+  img.src=src;
+}
+
+async function pwGhApi(token,method,path,body){
+  const res=await fetch('https://api.github.com'+path,{method,headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(data.message||(data.errors&&data.errors[0]&&data.errors[0].message)||'HTTP '+res.status);
+  return data;
+}
+function pwB64(str){return btoa(unescape(encodeURIComponent(str)));}
+function pwSleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function pwVerifyToken(){
+  const inputToken=document.getElementById('pw-token').value.trim();
+  const token=inputToken||pwToken;
+  const repo=document.getElementById('pw-repo').value.trim();
+  const errEl=document.getElementById('pw-step0-err');
+  errEl.style.display='none';
+  if(!token){errEl.textContent='⚠️ Tokenを入力してください（設定でTokenを登録するか、ここに直接入力してください）';errEl.style.display='block';return;}
+  if(!repo){errEl.textContent='⚠️ リポジトリ名を入力してください';errEl.style.display='block';return;}
+  const btn=event.target;btn.disabled=true;btn.textContent='確認中...';
+  try{
+    const data=await pwGhApi(token,'GET','/user');
+    pwUser=data.login; pwToken=token;
+    try{await pwGhApi(token,'GET','/repos/'+pwUser+'/'+repo);errEl.textContent='⚠️ リポジトリ「'+repo+'」は既に存在します。別の名前を入力してください。';errEl.style.display='block';btn.disabled=false;btn.textContent='接続確認 & 次へ →';return;}
+    catch(e){if(!e.message.includes('Not Found')&&!e.message.includes('404'))throw e;}
+    showToast('✅ '+pwUser+' として接続しました');
+    pwGoStep(1);
+  }catch(e){errEl.textContent='⚠️ 認証エラー: '+e.message;errEl.style.display='block';}
+  finally{btn.disabled=false;btn.textContent='接続確認 & 次へ →';}
+}
+
+function pwValidateHtml(){
+  const html=document.getElementById('pw-html').value.trim();
+  if(!html||html.length<20){showToast('HTMLを入力してください');return;}
+  const lines=html.split('\n').length;const size=(new Blob([html]).size/1024).toFixed(1);
+  const info=document.getElementById('pw-html-info');info.style.display='block';
+  info.innerHTML='📊 検出: <strong>'+lines+'行</strong> / <strong>'+size+' KB</strong>';
+  pwGoStep(2);
+}
+
+function pwValidateSettings(){
+  const name=document.getElementById('pw-appname').value.trim();
+  const short=document.getElementById('pw-shortname').value.trim();
+  if(!name){showToast('アプリ名を入力してください');return;}
+  if(!short){showToast('ショートネームを入力してください');return;}
+  const repo=document.getElementById('pw-repo').value.trim();
+  const display=document.querySelector('input[name="pw-display"]:checked').value;
+  const theme=document.getElementById('pw-theme-hex').value;
+  const bg=document.getElementById('pw-bg-hex').value;
+  document.getElementById('pwa-deploy-summary').innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;">'+
+    '<div>👤 ユーザー: <strong>'+pwUser+'</strong></div>'+
+    '<div>📦 リポジトリ: <strong>'+repo+'</strong></div>'+
+    '<div>📱 アプリ名: <strong>'+name+'</strong></div>'+
+    '<div>🏷 ショート: <strong>'+short+'</strong></div>'+
+    '<div>🎨 モード: <strong>'+display+'</strong></div>'+
+    '<div>🖼 アイコン: <strong>'+(pwIconData.img512?'カスタム':'デフォルト')+'</strong></div>'+
+    '</div>';
+  pwGoStep(3);
+}
+
+const PW_STEPS_LABELS=['リポジトリ作成','manifest.json','Service Worker','index.html','アイコン','GitHub Pages有効化','倉庫に保存','完了確認'];
+function pwRenderProgress(states){
+  const icons={pending:'○',running:'●',done:'✓',error:'✗',skip:'－'};
+  document.getElementById('pwa-step-rows').innerHTML=PW_STEPS_LABELS.map((label,i)=>
+    '<div class="pwa-step-row ps-'+(states[i]||'pending')+'"><div class="sr-icon">'+icons[states[i]||'pending']+'</div><span>'+label+'</span></div>'
+  ).join('');
+  const done=states.filter(s=>s==='done'||s==='skip').length;
+  document.getElementById('pwa-progress-fill').style.width=((done/PW_STEPS_LABELS.length)*100)+'%';
+}
+
+async function pwStartDeploy(){
+  document.getElementById('pw-deploy-err').style.display='none';
+  const token=pwToken;
+  const repo=document.getElementById('pw-repo').value.trim();
+  const isPrivate=document.getElementById('pw-visibility').value==='true';
+  const appName=document.getElementById('pw-appname').value.trim();
+  const shortName=document.getElementById('pw-shortname').value.trim();
+  const desc=document.getElementById('pw-desc').value.trim();
+  const themeColor=document.getElementById('pw-theme-hex').value;
+  const bgColor=document.getElementById('pw-bg-hex').value;
+  const display=document.querySelector('input[name="pw-display"]:checked').value;
+  let html=document.getElementById('pw-html').value.trim();
+  const basePath='/'+repo+'/';
+
+  const states=Array(PW_STEPS_LABELS.length).fill('pending');
+  document.getElementById('pwa-progress-wrap').style.display='block';
+  document.getElementById('pwa-deploy-btns').style.display='none';
+  pwRenderProgress(states);
+  const set=(i,s)=>{states[i]=s;pwRenderProgress(states);};
+
+  try{
+    // 0: リポジトリ作成
+    set(0,'running');
+    await pwGhApi(token,'POST','/user/repos',{name:repo,private:isPrivate,description:desc||appName+' - PWA',auto_init:false});
+    set(0,'done');await pwSleep(600);
+
+    const manifest={name:appName,short_name:shortName,description:desc,start_url:basePath,scope:basePath,display,background_color:bgColor,theme_color:themeColor,orientation:'any',
+      icons:pwIconData.img192?[{src:basePath+'icon-192.png',sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:basePath+'icon-512.png',sizes:'512x512',type:'image/png',purpose:'any maskable'}]:[{src:'https://placehold.co/192x192/6c63ff/ffffff?text=APP',sizes:'192x192',type:'image/png'},{src:'https://placehold.co/512x512/6c63ff/ffffff?text=APP',sizes:'512x512',type:'image/png'}]};
+    const sw="const CACHE='pwa-v1';\nconst ASSETS=['"+basePath+"','"+basePath+"index.html','"+basePath+"manifest.json'];\nself.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).catch(()=>{}));self.skipWaiting();});\nself.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});\nself.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match('"+basePath+"index.html'))));});";
+    const pwaHead='\n  <link rel="manifest" href="'+basePath+'manifest.json">\n  <meta name="theme-color" content="'+themeColor+'">\n  <meta name="apple-mobile-web-app-capable" content="yes">\n  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">\n  <meta name="apple-mobile-web-app-title" content="'+shortName+'">\n  <meta name="mobile-web-app-capable" content="yes">\n  '+(pwIconData.img192?'<link rel="apple-touch-icon" href="'+basePath+'icon-192.png">':'')+'\n  <script>if(\'serviceWorker\' in navigator){window.addEventListener(\'load\',()=>{navigator.serviceWorker.register(\''+basePath+'sw.js\').catch(()=>{});});}<\/script>';
+    if(html.includes('</head>'))html=html.replace('</head>',pwaHead+'\n</head>');
+    else if(html.includes('<head>'))html=html.replace('<head>','<head>'+pwaHead);
+    else html=pwaHead+'\n'+html;
+
+    // 1: manifest.json
+    set(1,'running');
+    await pwGhApi(token,'PUT','/repos/'+pwUser+'/'+repo+'/contents/manifest.json',{message:'Add manifest.json',content:pwB64(JSON.stringify(manifest,null,2))});
+    set(1,'done');await pwSleep(300);
+
+    // 2: sw.js
+    set(2,'running');
+    await pwGhApi(token,'PUT','/repos/'+pwUser+'/'+repo+'/contents/sw.js',{message:'Add service worker',content:pwB64(sw)});
+    set(2,'done');await pwSleep(300);
+
+    // 3: index.html
+    set(3,'running');
+    await pwGhApi(token,'PUT','/repos/'+pwUser+'/'+repo+'/contents/index.html',{message:'Add index.html',content:pwB64(html)});
+    set(3,'done');await pwSleep(300);
+
+    // 4: アイコン
+    set(4,'running');
+    if(pwIconData.img192&&pwIconData.img512){
+      await pwGhApi(token,'PUT','/repos/'+pwUser+'/'+repo+'/contents/icon-192.png',{message:'Add icon 192px',content:pwIconData.img192});
+      await pwGhApi(token,'PUT','/repos/'+pwUser+'/'+repo+'/contents/icon-512.png',{message:'Add icon 512px',content:pwIconData.img512});
+      set(4,'done');
+    }else{set(4,'skip');}
+    await pwSleep(300);
+
+    // 5: Pages有効化
+    set(5,'running');
+    try{await pwGhApi(token,'POST','/repos/'+pwUser+'/'+repo+'/pages',{source:{branch:'main',path:'/'}});}
+    catch(e){if(!e.message.includes('409')&&!e.message.toLowerCase().includes('already'))throw e;}
+    set(5,'done');await pwSleep(800);
+
+    pwDeployedUrl='https://'+pwUser+'.github.io/'+repo+'/';
+
+    // 6: 倉庫に自動登録
+    set(6,'running');
+    const warehouseName=document.getElementById('f-name')?.value.trim()||appName;
+    const warehouseIcon=document.getElementById('f-icon-input')?.value.trim()||'⚡';
+    const warehouseFolder=pwFolderIdForSave||null;
+    apps.push({id:uid(),type:'pwa',name:warehouseName,icon:warehouseIcon,desc:desc||appName+' - PWAアプリ',url:pwDeployedUrl,folderId:warehouseFolder,repo,ghUser:pwUser,createdAt:Date.now()});
+    await saveToGist();
+    renderAll();
+    set(6,'done');await pwSleep(500);
+
+    // 7: 完了確認
+    set(7,'running');
+    await pwSleep(3000);
+    set(7,'done');
+
+    pwGoStep(4);
+    // 完了画面
+    document.getElementById('pwa-final-url').textContent=pwDeployedUrl;
+    document.getElementById('pwa-open-btn').href=pwDeployedUrl;
+    document.getElementById('pwa-qrcode').innerHTML='';
+    try{new QRCode(document.getElementById('pwa-qrcode'),{text:pwDeployedUrl,width:160,height:160,colorDark:'#6c63ff',colorLight:'#1a1d27'});}catch(e){}
+    showToast('🎉 PWAデプロイ＆倉庫登録完了！');
+
+  }catch(e){
+    const idx=states.findIndex(s=>s==='running');if(idx>=0)set(idx,'error');
+    const errEl=document.getElementById('pw-deploy-err');errEl.textContent='⚠️ '+e.message;errEl.style.display='block';
+    document.getElementById('pwa-deploy-btns').style.display='flex';
+    document.getElementById('pwa-deploy-btn').disabled=false;
+    document.getElementById('pwa-deploy-btn').textContent='🔄 リトライ';
+  }
+}
+
+function pwCopyUrl(){navigator.clipboard.writeText(pwDeployedUrl).then(()=>showToast('📋 URLをコピーしました'));}
+
+document.getElementById('pw-visibility').addEventListener('change',function(){document.getElementById('pw-private-warn').style.display=this.value==='true'?'block':'none';});
+
+init();
+</script>
+</body>
+</html>
